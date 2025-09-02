@@ -1,0 +1,128 @@
+:root {
+  --bg: #fdfdfd;
+  --panel: #ffffff;
+  --ink: #222;
+  --subtle: #666;
+  --accent: #3366cc;
+  --radius: 12px;
+  --gap: 16px;
+  --maxw: 1100px;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+  background: var(--bg);
+  color: var(--ink);
+  line-height: 1.5;
+}
+
+header {
+  max-width: var(--maxw);
+  margin: 40px auto 24px;
+  padding: 24px;
+  background: var(--panel);
+  border: 1px solid #ddd;
+  border-radius: var(--radius);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+h1 {
+  margin: 0 0 6px;
+  font-size: clamp(1.4rem, 2.5vw, 2rem);
+}
+
+.subtitle {
+  color: var(--subtle);
+  margin: 0;
+  font-size: .98rem;
+}
+
+main {
+  max-width: var(--maxw);
+  margin: 0 auto 80px;
+  padding: 0 16px 16px;
+  display: grid;
+  gap: 28px;
+}
+
+section.part {
+  background: var(--panel);
+  border: 1px solid #ddd;
+  border-radius: var(--radius);
+  padding: clamp(16px, 2.5vw, 28px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.part h2 {
+  margin: 0 0 6px;
+  font-size: clamp(1.2rem, 2vw, 1.5rem);
+}
+
+.part .desc {
+  margin: 0 0 18px;
+  color: var(--subtle);
+  font-size: .98rem;
+}
+
+.pair {
+  display: grid;
+  gap: var(--gap);
+}
+@media (min-width: 780px) {
+  .pair { grid-template-columns: 1fr 1fr; }
+}
+
+figure {
+  margin: 0;
+  border: 1px solid #ddd;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #f8f8f8;
+}
+
+figure img {
+  display: block;
+  height: auto;
+  max-height: 70vh;
+  object-fit: cover;
+  aspect-ratio: 4/5;
+}
+
+figcaption {
+  padding: 10px 12px;
+  font-size: .95rem;
+  color: var(--subtle);
+  border-top: 1px solid #eee;
+  background: rgba(255,255,255,0.8);
+  backdrop-filter: blur(4px);
+}
+
+.gif-wrap { display: grid; gap: var(--gap); }
+.gif-note { margin: 0; color: var(--subtle); font-size: .95rem; }
+
+.gif-box {
+  display: grid;
+  place-items: center;
+  background: #f8f8f8;
+  border: 1px solid #ddd;
+  border-radius: 14px;
+  overflow: hidden;
+  padding: 10px;
+}
+
+.gif-box img {
+  max-width: 920px;
+  height: auto;
+  max-height: 70vh;
+  display: block;
+}
+
+@media print {
+  body { background: #fff; color: #000; }
+  header, section.part { box-shadow: none; border-color: #ccc; }
+  figcaption, .subtitle, .desc, .gif-note { color: #333 !important; }
+}
