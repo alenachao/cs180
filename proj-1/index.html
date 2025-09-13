@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CS180 Project 1</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <h1>CS180 Project 1: Colorizing the Prokudin-Gorskii Photo Collection</h1>
+    <p class="subtitle">By Alena Chao</p>
+  </header>
+
+  <main>
+    <section class="part">
+      <h2>Overview</h2>
+      <p class="desc">For each image in the Prokudin-Gorskii collection, an exposure was taken through each a red, a green, and a blue filter.
+        However, the channels are not fully aligned, so in this project we use different algorithms to reconstruct the image.
+      </p>
+    </section>
+
+    <section class="part">
+      <h2>Single Scale Alignment</h2>
+      <p class="desc">
+        For smaller images, we can simply compare the channels at the original resolution. We keep the blue channel constant and
+        shift the green and red channels, trying to find the best shift that produces the best Normalized Cross-Correlation (NCC) score. We limit
+        our search within a certain max shift. We also crop the border of the image to avoid unnecessary loss in our score, 
+        since we expect the channels to be unaligned at the edges.
+      </p>
+      <div class="grid">
+        <figure>
+          <img src="imgs/cathedral-colorized.jpg" alt="Cathedral" />
+          <figcaption>Cathedral</figcaption>
+        </figure>
+        <figure>
+          <img src="imgs/monastery-colorized.jpg" alt="Monastery" />
+          <figcaption>Monastery</figcaption>
+        </figure>
+        <figure>
+          <img src="imgs/tobolsk-colorized.jpg" alt="Tobolsk" />
+          <figcaption>Tobolsk</figcaption>
+        </figure>
+      </div>
+
+      <table class="align-table">
+        <thead>
+          <tr>
+            <th>Image</th>
+            <th>Red dx</th>
+            <th>Red dy</th>
+            <th>Green dx</th>
+            <th>Green dy</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Cathedral</td>
+            <td>3</td>
+            <td>12</td>
+            <td>2</td>
+            <td>5</td>
+          </tr>
+          <tr>
+            <td>Monastery</td>
+            <td>2</td>
+            <td>3</td>
+            <td>2</td>
+            <td>-3</td>
+          </tr>
+          <tr>
+            <td>Tobolsk</td>
+            <td>3</td>
+            <td>6</td>
+            <td>3</td>
+            <td>3</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="part">
+      <h2>Multi Scale Alignment</h2>
+      <p class="desc">
+        For larger images, it is less feasible to try out all possible shifts. So, we can construct an image pyramid.
+        I still used the same cropping and NCC scoring, but we no longer only use the original resolution of the channels.
+        We essentially recursively downsize both the current channel and reference channel by a factor of 2, find the best shift at 
+        that lower resolution, and then when we scale the images back up we make sure to also scale the shift back up as well. We 
+        can sum up these shifts to get a total shift we can apply to our original channels.
+      </p>
+      <p class="desc">
+        One image my algorithm struggled with was the self_portrait image. This is probably due to the fact that there are large artifacts
+        in the image, causing a large error even if the image is aligned, making it harder to find the best shift with precision. Some solutions
+        to this is to use different features rather than the raw pixel colors, or using a gausian filter to get rid of this aliasing.
+      </p>
+      <div class="grid">
+        <figure><img src="imgs/church-colorized.jpg" alt="Church" /><figcaption>Church</figcaption></figure>
+        <figure><img src="imgs/emir-colorized.jpg" alt="Emir" /><figcaption>Emir</figcaption></figure>
+        <figure><img src="imgs/harvesters-colorized.jpg" alt="Harvesters" /><figcaption>Harvesters</figcaption></figure>
+        <figure><img src="imgs/icon-colorized.jpg" alt="Icon" /><figcaption>Icon</figcaption></figure>
+        <figure><img src="imgs/italil-colorized.jpg" alt="Italil" /><figcaption>Italil</figcaption></figure>
+        <figure><img src="imgs/lastochikino-colorized.jpg" alt="Lastochikino" /><figcaption>Lastochikino</figcaption></figure>
+        <figure><img src="imgs/lugano-colorized.jpg" alt="Lugano" /><figcaption>Lugano</figcaption></figure>
+        <figure><img src="imgs/melons-colorized.jpg" alt="Melons" /><figcaption>Melons</figcaption></figure>
+        <figure><img src="imgs/self_portrait-colorized.jpg" alt="Self Portrait" /><figcaption>Self Portrait</figcaption></figure>
+        <figure><img src="imgs/siren-colorized.jpg" alt="Siren" /><figcaption>Siren</figcaption></figure>
+        <figure><img src="imgs/three_generations-colorized.jpg" alt="Three Generations" /><figcaption>Three Generations</figcaption></figure>
+      </div>
+
+      <table class="align-table">
+        <thead>
+          <tr>
+            <th>Image</th>
+            <th>Red dx</th>
+            <th>Red dy</th>
+            <th>Green dx</th>
+            <th>Green dy</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Church</td>
+            <td>-14</td>
+            <td>52</td>
+            <td>-4</td>
+            <td>23</td>
+          </tr>
+          <tr>
+            <td>Emir</td>
+            <td>106</td>
+            <td>36</td>
+            <td>46</td>
+            <td>20</td>
+          </tr>
+          <tr>
+            <td>Harvesters</td>
+            <td>8</td>
+            <td>122</td>
+            <td>10</td>
+            <td>59</td>
+          </tr>
+          <tr>
+            <td>Icon</td>
+            <td>22</td>
+            <td>90</td>
+            <td>16</td>
+            <td>41</td>
+          </tr>
+          <tr>
+            <td>Italil</td>
+            <td>34</td>
+            <td>77</td>
+            <td>18</td>
+            <td>38</td>
+          </tr>
+          <tr>
+            <td>Lastochikino</td>
+            <td>-6</td>
+            <td>74</td>
+            <td>-2</td>
+            <td>-3</td>
+          </tr>
+          <tr>
+            <td>Lugano</td>
+            <td>-28</td>
+            <td>93</td>
+            <td>-12</td>
+            <td>38</td>
+          </tr>
+          <tr>
+            <td>Melons</td>
+            <td>7</td>
+            <td>174</td>
+            <td>4</td>
+            <td>83</td>
+          </tr>
+          <tr>
+            <td>Self Portrait</td>
+            <td>26</td>
+            <td>172</td>
+            <td>18</td>
+            <td>76</td>
+          </tr>
+          <tr>
+            <td>Siren</td>
+            <td>-21</td>
+            <td>98</td>
+            <td>-7</td>
+            <td>48</td>
+          </tr>
+          <tr>
+            <td>Three Generations</td>
+            <td>7</td>
+            <td>110</td>
+            <td>5</td>
+            <td>52</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="part">
+      <h2>Custom Images</h2>
+      <div class="grid">
+        <figure>
+          <img src="imgs/bridge-colorized.jpg" alt="At the estate, Denmark" />
+          <figcaption>At the estate. Denmark</figcaption>
+        </figure>
+        <figure>
+          <img src="imgs/statue-colorized.jpg" alt="In Alupka, Crimea" />
+          <figcaption>In Alupka. Crimea</figcaption>
+        </figure>
+      </div>
+
+      <table class="align-table">
+        <thead>
+          <tr>
+            <th>Image</th>
+            <th>Red dx</th>
+            <th>Red dy</th>
+            <th>Green dx</th>
+            <th>Green dy</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>At the estate. Denmark</td>
+            <td>-3</td>
+            <td>12</td>
+            <td>-1</td>
+            <td>7</td>
+          </tr>
+          <tr>
+            <td>In Alupka. Crimea</td>
+            <td>-26</td>
+            <td>139</td>
+            <td>-11</td>
+            <td>33</td>
+          </tr>
+        </tbody>
+      </table>
+
+    </section>
+
+  </main>
+</body>
+</html>
