@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CS180 Project 2</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <h1>CS180 Project 2: Fun with Filters and Frequencies!</h1>
+    <p class="subtitle">By Alena Chao</p>
+  </header>
+
+  <main>
+    <!-- Part 1 -->
+    <section class="part">
+      <h2>Convolutions From Scratch</h2>
+      <div style="display:flex; align-items: center; gap: 1rem;">
+        <figure style="min-width:200px;">
+          <img src="imgs/wonyoung_gray.png" alt="Grayscale portrait of Wonyoung" />
+          <figcaption>Input: Wonyoung Portrait</figcaption>
+        </figure>
+        <p class="desc">
+          In this section we implement a 2D convolution using NumPy only and then compare the results with 
+          <code>scipy.signal.convolve2d</code>. I implemented a 4-loop and 2-loop implementation of the 
+          convolution with "same" 0-padding. I also used "same" padding when using <code>scipy.signal.convolve2d</code>.
+          We use each approach to convolve a portrait with a 9x9 box filter, and finite difference filters in the 
+          x (Dx) and y (Dy) directions.<br><br>
+
+          The outputs looks pretty much identical, except it seems for the Dx and Dy outputs, the high and low
+          frequencies are switched between the NumPy implementations and the scipy implementation. Since 
+          I used the same type of padding, the borders of the images look the same as well. In terms
+          of runtime analysis, the 4 loop approach is the slowest, then the 2 loop, then the scipy is most optimized.
+        </p>
+      </div>
+      <table class="align-table">
+        <thead>
+          <tr>
+            <th>Filter</th>
+            <th>4 loops</th>
+            <th>2 loops</th>
+            <th>SciPy</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Box Filter</td>
+            <td><img src="imgs/wonyoung_4loop.png" alt="Box filter result using 4-loop convolution" /></td>
+            <td><img src="imgs/wonyoung_2loop.png" alt="Box filter result using 2-loop convolution" /></td>
+            <td><img src="imgs/wonyoung_scipy.png" alt="Box filter result using SciPy convolution" /></td>
+          </tr>
+          <tr>
+            <td>Dx</td>
+            <td><img src="imgs/wonyoung_4loop_dx.png" alt="X-derivative using 4-loop convolution" /></td>
+            <td><img src="imgs/wonyoung_2loop_dx.png" alt="X-derivative using 2-loop convolution" /></td>
+            <td><img src="imgs/wonyoung_scipy_dx.png" alt="X-derivative using SciPy convolution" /></td>
+          </tr>
+          <tr>
+            <td>Dy</td>
+            <td><img src="imgs/wonyoung_4loop_dy.png" alt="Y-derivative using 4-loop convolution" /></td>
+            <td><img src="imgs/wonyoung_2loop_dy.png" alt="Y-derivative using 2-loop convolution" /></td>
+            <td><img src="imgs/wonyoung_scipy_dy.png" alt="Y-derivative using SciPy convolution" /></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="part">
+      <h2>Gradients and Edges</h2>
+      <p class="desc">
+        In this section we compare 3 methods of producing gradient and edge images.<br><br>
+        The first method is using a finite difference filter to simply find the partial derivatives of the image, 
+        combine them to find the gradient magnitude of image, then finally pick some threshold to binarize the gradient.
+        The second method is to convolve the image with a gaussian kernel to smooth the image before
+        applying similar actions. The third method is to take the partial derivatives of the gaussian before
+        applying it to the original image, so that we only apply one convolution versus chaining multiple.
+      </p>
+      <table class="align-table">
+        <thead>
+          <tr>
+            <th>Step</th>
+            <th>Finite Difference</th>
+            <th>Gaussian + Finite Difference</th>
+            <th>Derivative of Gaussian</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Input</td>
+            <td><img src="imgs/cameraman_gray.png" alt="Original cameraman image" /></td>
+            <td><img src="imgs/cameraman_blurred.png" alt="Blurred cameraman image" /></td>
+            <td><img src="imgs/cameraman_gray.png" alt="Original cameraman image" /></td>
+          </tr>
+          <tr>
+            <td>Dx</td>
+            <td><img src="imgs/cameraman_Ix.png" alt="X-gradient with finite difference" /></td>
+            <td><img src="imgs/cameraman_blurred_dx.png" alt="X-gradient after Gaussian smoothing" /></td>
+            <td><img src="imgs/cameraman_dogx.png" alt="X-gradient using derivative of Gaussian" /></td>
+          </tr>
+          <tr>
+            <td>Dy</td>
+            <td><img src="imgs/cameraman_Iy.png" alt="Y-gradient with finite difference" /></td>
+            <td><img src="imgs/cameraman_blurred_dy.png" alt="Y-gradient after Gaussian smoothing" /></td>
+            <td><img src="imgs/cameraman_dogy.png" alt="Y-gradient using derivative of Gaussian" /></td>
+          </tr>
+          <tr>
+            <td>Gradient Magnitude</td>
+            <td><img src="imgs/cameraman_gradmag.png" alt="Gradient magnitude from finite differences" /></td>
+            <td><img src="imgs/cameraman_blurred_gradmag.png" alt="Gradient magnitude after Gaussian smoothing" /></td>
+            <td><img src="imgs/cameraman_dog_gradmag.png" alt="Gradient magnitude using derivative of Gaussian" /></td>
+          </tr>
+          <tr>
+            <td>Binarized Edges</td>
+            <td><img src="imgs/cameraman_binary.png" alt="Binarized edges from finite differences" /></td>
+            <td><img src="imgs/cameraman_blurred_binary.png" alt="Binarized edges after Gaussian smoothing" /></td>
+            <td><img src="imgs/cameraman_dog_binary.png" alt="Binarized edges using derivative of Gaussian" /></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p>
+        Comparing the outputs, we see the most difference in the binarized outputs. I chose a threshold of 0.06 for all 
+        3 methods for proper comparison. This threshold gave a good balance in finding most edges in the gaussian smoothed
+        outputs, but still removed some noise from the finite difference output. Still, we can see there is much
+        more noise in the result where we did not use gaussian blurring. Lastly I wanted to comment that the results
+        for the second and third method appear basically the same.
+      </p>
+    </section>
+
+    <!-- Part 2 -->
+    <section class="part">
+      <h2>Image Sharpening</h2>
+      <p class="desc">
+        In this section we explore image sharpening by blurring an image, then subtracting these frequencies from 
+        the original image. This will give you the high frequencies of the image. Adding the high frequencies 
+        to the original image gives the sharpened image.
+      </p>
+      <div class="grid">
+        <figure><img src="imgs/taj.jpg" alt="Original Taj Mahal image" /><figcaption>Taj Mahal</figcaption></figure>
+        <figure><img src="imgs/taj_blurred.png" alt="Blurred Taj Mahal image" /><figcaption>Taj Blurred</figcaption></figure>
+        <figure><img src="imgs/taj_details.png" alt="Extracted high frequencies of Taj Mahal" /><figcaption>High Frequencies</figcaption></figure>
+      </div>
+      <p>
+        For this result, we see how the image changes depending on how much we "sharpen" the image (which is dependent on alpha).
+        We can see that the more we sharpen the image, the darker edges get, almost looking unnatural if we sharpen too much.
+      </p>
+      <div class="grid">
+        <figure><img src="imgs/taj_sharpened_1.png" alt="Sharpened Taj Mahal (alpha=1)" /><figcaption>Sharpened (alpha=1)</figcaption></figure>
+        <figure><img src="imgs/taj_sharpened_2.png" alt="Sharpened Taj Mahal (alpha=2)" /><figcaption>Sharpened (alpha=2)</figcaption></figure>
+        <figure><img src="imgs/taj_sharpened_5.png" alt="Sharpened Taj Mahal (alpha=5)" /><figcaption>Sharpened (alpha=5)</figcaption></figure>
+      </div>
+      <p>
+        For this second result, we blur the image and then attempt to sharpen it again. So, approach is similar,
+        but the high frequencies are taken from and applied to the blurred image rather than the original image.
+        It's pretty clear that the details/high frequencies for this attempt are much fainter, and so when adding 
+        the high frequencies I had to use a higher alpha value (I used alpha=2 for Taj, but alpha=10 for Yosemite).
+      </p>
+      <div class="grid">
+        <figure><img src="imgs/yosemite.jpeg" alt="Original Yosemite landscape" /><figcaption>Yosemite</figcaption></figure>
+        <figure><img src="imgs/yosemite_blurred.png" alt="Blurred Yosemite landscape" /><figcaption>Yosemite Blurred</figcaption></figure>
+        <figure><img src="imgs/yosemite_blurred_details.png" alt="Extracted high frequencies of blurred Yosemite" /><figcaption>Yosemite Blurred High Frequencies</figcaption></figure>
+        <figure><img src="imgs/yosemite_sharpened.png" alt="Sharpened Yosemite" /><figcaption>Sharpened</figcaption></figure>
+      </div>
+    </section>
+
+    <section class="part">
+      <h2>Hybrid Images</h2>
+      <p class="desc">
+        In this section we create hybrid images, which is taking the high frequencies of one image and averaging them
+        with the low frequencies of another. The result is that the high frequency image is "emphasized" from up close 
+        whereas the low frequency image will be more prominent from far away. Admittedly, I think the high frequencies 
+        in my hybrid images look a bit weak. I would try using some amplification or normalizing to help with this. I 
+        also think keeping the images colored makes the results more mixed, so I would be interested in reproducing
+        the images but in grayscale.
+      </p>
+      <div class="grid">
+        <figure><img src="imgs/DerekPicture.jpg" alt="Portrait of Derek" /><figcaption>Derek</figcaption></figure>
+        <figure><img src="imgs/nutmeg.jpg" alt="Portrait of Nutmeg the cat" /><figcaption>Nutmeg</figcaption></figure>
+        <figure><img src="imgs/derek_nutmeg.png" alt="Hybrid of Derek and Nutmeg" /><figcaption>Derek + Nutmeg Hybrid</figcaption></figure>
+      </div>
+      <div class="grid">
+        <figure><img src="imgs/mona_lisa.jpg" alt="Painting of Mona Lisa" /><figcaption>Mona Lisa</figcaption></figure>
+        <figure><img src="imgs/minion.jpg" alt="Minion character" /><figcaption>Minion</figcaption></figure>
+        <figure><img src="imgs/monalisa_minion.png" alt="Hybrid of Mona Lisa and Minion" /><figcaption>Mona Lisa + Minion Hybrid</figcaption></figure>
+      </div>
+      <div class="grid">
+        <figure><img src="imgs/basketball.jpeg" alt="Basketball" /><figcaption>Basketball</figcaption></figure>
+        <figure><img src="imgs/tennis_ball.jpeg" alt="Tennis ball" /><figcaption>Tennis Ball</figcaption></figure>
+        <figure><img src="imgs/basketball_tennis.png" alt="Hybrid of basketball and tennis ball" /><figcaption>Basketball + Tennis Ball Hybrid</figcaption></figure>
+      </div>
+      <p class="desc">
+        For this next pair of images, I illustrate the full process: alignment, fourier transforms, 
+        filtered results, and the final image. For cutoff frequency, I chose sigma_high=4 and sigma_low=6.
+      </p>
+      <div class="grid">
+        <figure><img src="imgs/cat.jpg" alt="Cat" /><figcaption>Cat</figcaption></figure>
+        <figure><img src="imgs/cat_aligned.png" alt="Aligned cat image" /><figcaption>Cat (Aligned)</figcaption></figure>
+        <figure><img src="imgs/cat_fft.png" alt="Fourier transform of cat" /><figcaption>Cat Fourier Transform</figcaption></figure>
+      </div>
+      
+      <div class="grid">
+        <figure><img src="imgs/lion.jpeg" alt="Lion" /><figcaption>Lion</figcaption></figure>
+        <figure><img src="imgs/lion_aligned.png" alt="Aligned lion image" /><figcaption>Lion (Aligned)</figcaption></figure>
+        <figure><img src="imgs/lion_fft.png" alt="Fourier transform of lion" /><figcaption>Lion Fourier Transform</figcaption></figure>
+      </div>
+
+      <div class="grid">
+        <figure><img src="imgs/cat_filtered.png" alt="Filtered cat image" /><figcaption>Cat (Filtered)</figcaption></figure>
+        <figure><img src="imgs/cat_filtered_fft.png" alt="Fourier transform of filtered cat" /><figcaption>Cat Filtered Fourier Transform</figcaption></figure>
+        <figure><img src="imgs/lion_filtered.png" alt="Filtered lion image" /><figcaption>Lion (Filtered)</figcaption></figure>
+        <figure><img src="imgs/lion_filtered_fft.png" alt="Fourier transform of filtered lion" /><figcaption>Lion Filtered Fourier Transform</figcaption></figure>
+      </div>
+        
+      <div class="grid">
+        <figure><img src="imgs/cat_lion.png" alt="Hybrid of cat and lion" /><figcaption>Cat + Lion Hybrid</figcaption></figure>
+        <figure><img src="imgs/cat_lion_fft.png" alt="Fourier transform of hybrid" /><figcaption>Cat + Lion Hybrid Fourier Transform</figcaption></figure>
+      </div>
+    </section>
+
+    <section class="part">
+      <h2>Gaussian and Laplacian Stacks</h2>
+      <p class="desc">
+        In this section we create gaussian and laplacian stacks of images. The process of creating a 
+        gaussian stack is to essentially repeatedly convolve an image witha gaussian kernel. Then we
+        use the gaussian stack to construct the laplacian stack by taking the difference between
+        each pair of consecutive layers in teh gaussian stack. The last layer of the laplacian stack is 
+        simply the last layer of the gaussian stack, so now each stack will have the same amount of layers.
+      </p>
+      <div class="grid">
+        <figure><img src="imgs/apple_stacks.png" alt="Gaussian and Laplacian stacks of apple" /><figcaption>Apple Stacks</figcaption></figure>
+      </div>
+
+        <div class="grid">
+        <figure><img src="imgs/orange_stacks.png" alt="Gaussian and Laplacian stacks of orange" /><figcaption>Orange Stacks</figcaption></figure>
+      </div>
+    </section>
+
+    <section class="part">
+      <h2>Image Blending</h2>
+      <p class="desc">
+        We utilize creating gaussian and laplacian to blend 2 images together.
+        We create a laplacian stack for each image, as well a gaussian stack for our mask.
+        Stitching these stacks together using our smoothed mask gives a smooth transition between our images.
+        <br><br>
+        In these first examples we use a simple vertical mask.
+      </p>
+      <div class="grid">
+        <figure><img src="imgs/apple.jpeg" alt="Apple" /><figcaption>Apple</figcaption></figure>
+        <figure><img src="imgs/orange.jpeg" alt="Orange" /><figcaption>Orange</figcaption></figure>
+        </div>
+        <div class="grid">
+        <figure><img src="imgs/orapple_stacks.png" alt="Stack visualization of apple-orange blend" /><figcaption>Apple + Orange Blend Stacks</figcaption></figure>
+        <figure><img src="imgs/orapple.png" alt="Apple blended with orange" /><figcaption>Apple + Orange Blend</figcaption></figure>
+      </div>
+      <div class="grid">
+        <figure><img src="imgs/green_tree.jpg" alt="Green tree" /><figcaption>Green Tree</figcaption></figure>
+        <figure><img src="imgs/cherry_blossom.jpeg" alt="Cherry blossom" /><figcaption>Cherry Blossom</figcaption></figure>
+        <figure><img src="imgs/green_blossom.png" alt="Green tree blended with cherry blossom" /><figcaption>Green Tree + Cherry Blossom Blend</figcaption></figure>
+      </div>
+      <p class="desc">
+        In these next examples we use irregular masks by taking advantage of the solid background of one image to binarize the image into a mask.
+      </p>
+      <div class="grid">
+        <figure><img src="imgs/night.jpg" alt="Night sky" /><figcaption>Night Sky</figcaption></figure>
+        <figure><img src="imgs/kirby.jpg" alt="Kirby character" /><figcaption>Kirby</figcaption></figure>
+        </div>
+        <div class="grid">
+        <figure><img src="imgs/kirby_mask.png" alt="Binary mask for Kirby blending" /><figcaption>Kirby Mask</figcaption></figure>
+        <figure><img src="imgs/kirby_moon.png" alt="Kirby blended into night sky" /><figcaption>Kirby + Night Sky Blend</figcaption></figure>
+      </div>
+      <div class="grid">
+        <figure><img src="imgs/lebron.jpeg" alt="LeBron James" /><figcaption>LeBron James</figcaption></figure>
+        <figure><img src="imgs/emoji.jpeg" alt="Smiling emoji" /><figcaption>Emoji</figcaption></figure>
+        </div>
+        <div class="grid">
+        <figure><img src="imgs/emoji_mask.png" alt="Binary mask for emoji blending" /><figcaption>Emoji Mask</figcaption></figure>
+        <figure><img src="imgs/lebron_emoji.png" alt="LeBron blended with emoji" /><figcaption>LeBron + Emoji Blend</figcaption></figure>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
