@@ -119,6 +119,11 @@
         </tbody>
       </table>
 
+      <div class="grid">
+        <figure><img src="imgs/DoGx.png" alt="Original Taj Mahal image" /><figcaption>DoG_x filter (gaussian convolved with Dx)</figcaption></figure>
+        <figure><img src="imgs/DoGy.png" alt="Blurred Taj Mahal image" /><figcaption>DoG_y filter (gaussian convolved with Dy)</figcaption></figure>
+      </div>
+
       <p>
         Comparing the outputs, we see the most difference in the binarized outputs. I chose a threshold of 0.06 for all 
         3 methods for proper comparison. This threshold gave a good balance in finding most edges in the gaussian smoothed
@@ -244,6 +249,8 @@
         Stitching these stacks together using our smoothed mask gives a smooth transition between our images.
         <br><br>
         In these first examples we use a simple vertical mask.
+        <br><br>
+        Orapple:
       </p>
       <div class="grid">
         <figure><img src="imgs/apple.jpeg" alt="Apple" /><figcaption>Apple</figcaption></figure>
@@ -253,6 +260,9 @@
         <figure><img src="imgs/orapple_stacks.png" alt="Stack visualization of apple-orange blend" /><figcaption>Apple + Orange Blend Stacks</figcaption></figure>
         <figure><img src="imgs/orapple.png" alt="Apple blended with orange" /><figcaption>Apple + Orange Blend</figcaption></figure>
       </div>
+      <p>
+        Green Blossom:
+      </p>
       <div class="grid">
         <figure><img src="imgs/green_tree.jpg" alt="Green tree" /><figcaption>Green Tree</figcaption></figure>
         <figure><img src="imgs/cherry_blossom.jpeg" alt="Cherry blossom" /><figcaption>Cherry Blossom</figcaption></figure>
@@ -260,15 +270,21 @@
       </div>
       <p class="desc">
         In these next examples we use irregular masks by taking advantage of the solid background of one image to binarize the image into a mask.
+        <br><br>
+        Kirby Moon:
       </p>
       <div class="grid">
         <figure><img src="imgs/night.jpg" alt="Night sky" /><figcaption>Night Sky</figcaption></figure>
         <figure><img src="imgs/kirby.jpg" alt="Kirby character" /><figcaption>Kirby</figcaption></figure>
+        <figure><img src="imgs/kirby_mask.png" alt="Binary mask for Kirby blending" /><figcaption>Kirby Mask</figcaption></figure>
         </div>
         <div class="grid">
-        <figure><img src="imgs/kirby_mask.png" alt="Binary mask for Kirby blending" /><figcaption>Kirby Mask</figcaption></figure>
         <figure><img src="imgs/kirby_moon.png" alt="Kirby blended into night sky" /><figcaption>Kirby + Night Sky Blend</figcaption></figure>
+        <figure><img src="imgs/sky_kirby_stacks.png" alt="Kirby blended into night sky" /><figcaption>Laplacian and Gaussian Stacks</figcaption></figure>
       </div>
+      <p>
+        Lebron dunking emoji:
+      </p>
       <div class="grid">
         <figure><img src="imgs/lebron.jpeg" alt="LeBron James" /><figcaption>LeBron James</figcaption></figure>
         <figure><img src="imgs/emoji.jpeg" alt="Smiling emoji" /><figcaption>Emoji</figcaption></figure>
