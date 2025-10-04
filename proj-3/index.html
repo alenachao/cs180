@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CS180 Project 2</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <h1>CS180 Project 3: [Auto]Stitching Photo Mosaics</h1>
+    <p class="subtitle">By Alena Chao</p>
+  </header>
+
+  <main>
+    <!-- PROJ 3A -->
+    <section class="part">
+      <h2>Shoot the Pictures</h2>
+      <p class="desc">
+        This project's data is composed of sets of images, where images within each set have projective 
+        transformations between them. This means there's a fixed center of projection. In order to achieve this,
+        we take pictures by only rotating the camera, not moving translationally at all. Taking pictures with my
+        phone I had to make sure I wasn't rotating my body, but just moving my arms to keep the phone's 
+        center fixed.
+      </p>
+
+      <div class="grid">
+        <figure><img src="imgs/balcony_mid.jpeg" alt="Balcony middle view" /><figcaption>Balcony View (middle)</figcaption></figure>
+        <figure><img src="imgs/balcony_right.jpeg" alt="Balcony right view" /><figcaption>Balcony View (right)</figcaption></figure>
+      </div>
+
+      <div class="grid">
+        <figure><img src="imgs/lecture_left.jpeg" alt="Left lecture image" /><figcaption>CS180 Lecture (left)</figcaption></figure>
+        <figure><img src="imgs/lecture_mid.jpeg" alt="Middle lecture image" /><figcaption>CS180 Lecture (middle)</figcaption></figure>
+        <figure><img src="imgs/lecture_right.jpeg" alt="Right lecture image" /><figcaption>CS180 Lecture (right)</figcaption></figure>
+      </div>
+      
+    </section>
+
+    <section class="part">
+      <h2>Recovering Homographies</h2>
+      <p class="desc">
+        In order to "align" images together, we have to recover the transformation needed to map matching points
+        from one image to the other. We do this by setting up a systems of equations pH = p' where p p1 and p'1
+        correspond to the semantically same point in the pair of images. We can then solve for H, the homography
+        matrix that describes the transformation. To reduce error from noise, I chose ~20 correspondences. This 
+        leads to an overdetermined system, so we take the solution that results in the least error.
+      </p>
+
+      <div>
+        <figure><img src="imgs/balcony_mid_right_corr.png" alt="Matching points between balcony middle and right images" /><figcaption>Matching points: Balcony middle → Balcony right</figcaption></figure>
+        <p><b>Homography System of Equations:</b></p>
+        <div style="display: flex; align-items: center; gap: 20px;">
+          <pre style="margin: 0;">
+            [ -438  -517   -1     0     0     0   354780  418770   810 ]
+            [    0     0    0  -438  -517   -1   237834  280731   543 ]
+            ...
+          </pre>
+
+          <p style="margin: 0; font-size: 18px;">
+            ×
+            <i>h</i>
+            &asymp;
+            0
+          </p>
+        </div>
+        <p><b>Recovered Homography Matrix:</b></p>
+        <pre>
+          [ 0.519   -0.044  468.656 ]
+          [-0.161    0.814   97.646 ]
+          [-0.00036 -0.00002 1.000  ]
+        </pre>
+
+      </div>
+
+      <div>
+        <figure><img src="imgs/lecture_mid_left_corr.png" alt="Matching points between lecture middle and left images" /><figcaption>Matching points: Lecture middle → Lecture left</figcaption></figure>
+        <p><b>Homography System of Equations:</b></p>
+        <div style="display: flex; align-items: center; gap: 20px;">
+          <pre style="margin: 0;">
+            [ -414  -162   -1     0      0      0  122958  48114   297 ]
+            [    0     0    0  -414   -162   -1   71208   27864   172 ]
+            ...
+          </pre>
+
+          <p style="margin: 0; font-size: 18px;">
+            × <i>h</i> &asymp; 0
+          </p>
+
+        </div>
+
+        <p><b>Recovered Homography Matrix:</b></p>
+        <pre>
+            [  1.402    -0.0438  -202.317 ]
+            [  0.1778   1.218    -56.743 ]
+            [  0.000652 -0.000095  1.000  ]
+        </pre>
+      </div>
+
+      <div>
+        <figure><img src="imgs/lecture_mid_right_corr.png" alt="Matching points between lecture middle and right images" /><figcaption>Matching points: Lecture middle → Lecture right</figcaption></figure>
+        <p><b>Homography System of Equations:</b></p>
+        <div style="display: flex; align-items: center; gap: 20px;">
+          <pre style="margin: 0;">
+            [ -187  -172   -1     0      0      0   60962   56072   326 ]
+            [    0     0    0  -187   -172   -1   35904   33024   192 ]
+            ...
+          </pre>
+
+          <p style="margin: 0; font-size: 18px;">
+            × <i>h</i> &asymp; 0
+          </p>
+
+        </div>
+
+        <p><b>Recovered Homography Matrix:</b></p>
+        <pre>
+            [  0.632   -0.0395   178.021 ]
+            [ -0.128    0.825    50.929 ]
+            [ -0.000541 -0.000075  1.000 ]
+        </pre>
+      </div>
+
+    </section>
+
+    <section class="part">
+      <h2>Rectifying Images</h2>
+      <p class="desc">
+        Now that we have the correspondences and homography matrix between images, we can warp one image to be in 
+        the perspective of the other. We do this by first taking the inverse of H. Then we loop through "output" image,
+        or the image we are going to warp, and use H^-1 to map it back to where that pixel would be in the "input" image,
+        or the "ground truth". To actually determine the value of the pixel in the final warped image, we try 2 methods:
+        nearest neighbor, which simply takes the closest pixel, and bilinear interpolation, which interpolates the 4 
+        nearest pixels. I show a couple results of rectifying images, which is warping an image so that it is front-facing.
+      </p>
+      <div class="grid">
+        <figure><img src="imgs/square.jpeg" alt="square" /><figcaption>Square</figcaption></figure>
+        <figure><img src="imgs/square_nn.png" alt="Square warped with nearest neighbor" /><figcaption>Square rectified (nearest neighbor)</figcaption></figure>
+        <figure><img src="imgs/square_bi.png" alt="Square warped with bilinear interpolation" /><figcaption>Square rectified (bilinear)</figcaption></figure>
+      </div>
+
+      <div class="grid">
+        <figure><img src="imgs/poster.jpeg" alt="Poster" /><figcaption>Poster</figcaption></figure>
+        <figure><img src="imgs/poster_nn.png" alt="Poster warped with nearest neighbor" /><figcaption>Poster rectified (nearest neighbor)</figcaption></figure>
+        <figure><img src="imgs/poster_bi.png" alt="Poster warped with bilinear interpolation" /><figcaption>Poster rectified (bilinear)</figcaption></figure>
+      </div>
+      <p>
+        Comparing nearest neighbors and bilinear interpolation, it appears that bilinear is smoother, which makes sense
+        since it is interpolating between multiple points. The tradeoff though  is that bilinear took a bit longer runtime wise.
+      </p>
+    </section>
+
+    <section class="part">
+      <h2>Blending Images into a Mosaic</h2>
+      <p class="desc">
+        Lastly we can create our mosaics using the warping technique we implemented in the last section. Simply warping
+        and overlaying the images will create high frequencies on the overlap and not look smooth, so we also have to
+        blend the images together. I kept an alpha channel in the images that control the transparency of the pixel,
+        so we can take a weighted average of the pixels weighted by the alpha.
+      </p>
+      <div class="grid">
+        <figure><img src="imgs/balcony_mid.jpeg" alt="Balcony middle view" /><figcaption>Balcony View (middle)</figcaption></figure>
+        <figure><img src="imgs/balcony_right.jpeg" alt="Balcony right view" /><figcaption>Balcony View (right)</figcaption></figure>
+        <figure><img src="imgs/balcony_mid_right.png" alt="Blended balcony middle and right images" /><figcaption>Balcony Mosaic</figcaption></figure>
+      </div>
+      <div class="grid">
+        <figure><img src="imgs/alli_down.jpeg" alt="Human outline" /><figcaption>Human outline (lower)</figcaption></figure>
+        <figure><img src="imgs/alli_up.jpeg" alt="Human outline" /><figcaption>Human outline (upper)</figcaption></figure>
+        <figure><img src="imgs/alli_down_up.png" alt="Human outline" /><figcaption>Human outline mosaic</figcaption></figure>
+      </div>
+      <p>
+        With the lecture set of pictures, I noticed some slight artifacts, but I think it's mostly due to objects
+        within the picture moving in between me taking the pictures. So, overall still really happy with the results.
+      </p>
+      <div class="grid">
+        <figure><img src="imgs/lecture_left.jpeg" alt="Lecture left image" /><figcaption>Lecture (left)</figcaption></figure>
+        <figure><img src="imgs/lecture_mid.jpeg" alt="Lecture middle image" /><figcaption>Lecture (middle)</figcaption></figure>
+        <figure><img src="imgs/lecture_mid_left.png" alt="Blended lecture middle and left images" /><figcaption>Lecture Mosaic (middle + left)</figcaption></figure>
+      </div>
+      <div class="grid">
+        <figure><img src="imgs/lecture_mid.jpeg" alt="Lecture middle image" /><figcaption>Lecture (middle)</figcaption></figure>
+        <figure><img src="imgs/lecture_right.jpeg" alt="Lecture right image" /><figcaption>Lecture (right)</figcaption></figure>
+        <figure><img src="imgs/lecture_mid_right.png" alt="Blended lecture middle and right images" /><figcaption>Lecture Mosaic (middle + right)</figcaption></figure>
+      </div>
+      <div class="grid">
+        <figure><img src="imgs/lecture_mid_left.png" alt="Blended lecture middle and left images" /><figcaption>Lecture Mosaic (middle + left)</figcaption></figure>
+        <figure><img src="imgs/lecture_right.jpeg" alt="Lecture right image" /><figcaption>Lecture (right)</figcaption></figure>
+      </div>
+      <figure><img src="imgs/lecture_full.png" alt="Blended full lecture mosaic" /><figcaption>Full Lecture Mosaic</figcaption></figure>
+    </section>
+  </main>
+</body>
+</html>
+
