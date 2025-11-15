@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CS180 Project 2</title>
+  <title>CS180 Project 3</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -188,6 +188,86 @@
       </div>
       <figure><img src="imgs/lecture_full.png" alt="Blended full lecture mosaic" /><figcaption>Full Lecture Mosaic</figcaption></figure>
     </section>
+
+    <!-- PROJ 3B -->
+    <section class="part">
+      <h2>Harris Corner Detection + ANMS</h2>
+      <p class="desc">
+        Now that we've created some mosaics, we will attempt to autostitch them without manually picking correspondences. The first
+        step is implementing Harris Corner Detection, which detects corners as points where the gradient is strong in 2 directions.
+        However, this can produce some noisy results, so we also apply ANMS (Adaptive Non-Maximal Suppression). ANMS ensures we pick strong 
+        corners in a welldistributed manner by assigning a radius to each point, where the radius represents smallest distance from the current
+        point to another point that is a stronger corner than it. Then, we pick the points with the largest radii.
+      </p>
+      <div class="grid">
+        <figure><img src="imgs/lecture_mid_harris.png" alt="Balcony middle view" /><figcaption>Lecure Hall Harris Corners</figcaption></figure>
+        <figure><img src="imgs/lecture_mid_anms.png" alt="Balcony right view" /><figcaption>Lecure Hall ANMS</figcaption></figure>
+      </div>
+    </section>
+
+    <section class="part">
+      <h2>Extracting Feature Descriptors</h2>
+      <p class="desc">
+        For each ANMS corner, we take a 40x40 area around it, resize it to 8x8, and normalize the feature. This is to match 
+        features between images later.
+      </p>
+      <div class="grid">
+        <figure><img src="imgs/lecture_mid_feats.png" alt="Balcony middle view" /><figcaption>Lecure Hall Feature Descriptors</figcaption></figure>
+      </div>
+    </section>
+
+    <section class="part">
+      <h2>Matching Feature Descriptors</h2>
+      <p class="desc">
+        Now we can match feature Descriptors to get preliminary correspondences between images. We simply compute pairwise distances
+        between features and take the best pairs.
+      </p>
+      <div class="grid">
+        <figure><img src="imgs/lecture_mid_left_feats.png" alt="Balcony middle view" /><figcaption>Lecure Hall (mid and left) Matching Feature Descriptors</figcaption></figure>
+        <figure><img src="imgs/lecture_mid_left_corr_auto.png" alt="Balcony middle view" /><figcaption>Correspondences based on features</figcaption></figure>
+      </div>
+    </section>
+
+    <section class="part">
+      <h2>Automosaics using RANSAC</h2>
+      <p class="desc">
+        RANSAC creates a mosaic by taking points from our source and target image (we use the correspondences from last part) and randomly
+        samples from these points. It uses these sampled points to calculate the homography. It uses this homography matrix to transform the
+        source image. It takes the distance between the tranformed points and target points, and takes the score as how many points are 
+        under a certain threshold. It does this for some amount of iterations, and takes the iteration with the highest score.
+
+        The only mosaic that gave me some trouble was stitching 3 images together. However, I think with some more hyperparameter tuning 
+        (threshold, iterations, etc) I could get rid of the misalignment.
+      </p>
+      <div class="grid">
+        <figure><img src="imgs/alli_down_up_corr.png" alt="Balcony middle view" /><figcaption>Human Outline inlier correspondences</figcaption></figure>
+        <figure><img src="imgs/alli_down_up.png" alt="Balcony middle view" /><figcaption>Manual</figcaption></figure>
+        <figure><img src="imgs/alli_down_up_auto.png" alt="Balcony middle view" /><figcaption>Automatic</figcaption></figure>
+      </div>
+
+      <div class="grid">
+        <figure><img src="imgs/balcony_mid_right.png" alt="Balcony middle view" /><figcaption>Manual</figcaption></figure>
+        <figure><img src="imgs/balcony_mid_right_auto.png" alt="Balcony middle view" /><figcaption>Automatic</figcaption></figure>
+      </div>
+
+      <div class="grid">
+        <figure><img src="imgs/lecture_mid_left_ransac_corr.png" alt="Balcony middle view" /><figcaption>Lecure Hall (mid and left) inlier correspondencess</figcaption></figure>
+        <figure><img src="imgs/lecture_mid_left.png" alt="Balcony middle view" /><figcaption>Manual</figcaption></figure>
+        <figure><img src="imgs/lecture_mid_left_auto.png" alt="Balcony middle view" /><figcaption>Automatic</figcaption></figure>
+      </div>
+
+      <div class="grid">
+        <figure><img src="imgs/lecture_mid_right.png" alt="Balcony middle view" /><figcaption>Manual</figcaption></figure>
+        <figure><img src="imgs/lecture_mid_right_auto.png" alt="Balcony middle view" /><figcaption>Automatic</figcaption></figure>
+      </div>
+
+      <div class="grid">
+        <figure><img src="imgs/lecture_full.png" alt="Balcony middle view" /><figcaption>Manual</figcaption></figure>
+        <figure><img src="imgs/lecture_full_auto.png" alt="Balcony middle view" /><figcaption>Automatic</figcaption></figure>
+      </div>
+    </section>
+
+
   </main>
 </body>
 </html>
