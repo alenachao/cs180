@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CS180 Project 2</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <h1>CS180 Project 4: Neural Radiance Fields</h1>
+    <p class="subtitle">By Alena Chao</p>
+  </header>
+
+  <main>
+    <section class="part">
+      <h2>Camera Calibration and Capturing a 3D Scan</h2>
+      <p class="desc">
+        Our first step is calibrating our camera by learning its instrinsics and distortion coefficients. I took 30 pictures of ArUco 
+        tags which gives reliable targets for our camera to sense. We can then detect correspondences in the 2D images with known 3D
+        coordinates by assuming the tag as the origin and using the physical size of the tag to calibrate. Finally we use cv2.calibrateCamera()
+        to get the instrinsics of the camera.
+        <br><br>
+        After calibrating the camera, I took 50 pictures of a mug to use to train a NeRF on later. These pictures also have an ArUco tag
+        in it so we can once again detect them and use them correspond the 2D points in the images to 3D points in space. Then, we can use
+        the object coordinates and cv2.solvePnP() to estimate each camera's extrinsics. We can save these as well as the camera's instrinsics
+        as a dataset to train on.
+        <br><br>
+        Before saving the pose (mug) images, we can use the distortion coefficients from the camera calibration step to undistort the 
+        images. I actually found better results when I skipped this step, maybe because my camera had very little distortion so noise
+        in this step actually hurt my results.
+      </p>
+
+      <div class="grid">
+        <figure><img src="imgs/mug_3.jpeg" alt="Balcony middle view" /><figcaption></figcaption></figure>
+        <figure><img src="imgs/mug_2.jpeg" alt="Balcony right view" /><figcaption></figcaption></figure>
+        <figure><img src="imgs/mug_1.jpeg" alt="Balcony right view" /><figcaption></figcaption></figure>
+      </div>
+
+      <p class="desc">
+        After calculating the instrinsics and extrinsics, we can visualize the pose of each camera in our dataset.
+      </p>
+
+      <div class="grid">
+        <figure><img src="imgs/mug_cams_1.png" alt="Balcony middle view" /><figcaption></figcaption></figure>
+        <figure><img src="imgs/mug_cams_2.png" alt="Balcony right view" /><figcaption></figcaption></figure>
+        <figure><img src="imgs/mug_cams_3.png" alt="Balcony right view" /><figcaption></figcaption></figure>
+      </div>
+      
+    </section>
+
+    <section class="part">
+      <h2> Fit a Neural Field to a 2D Image</h2>
+      <p class="desc">
+        Before training our NeRF we will fit a 2D model to some images. My model architecture was as an MLP with 3 layers, hidden layer
+        width of 128, ReLU for hidden layer activations, and sigmoid for output activation. I used Adam optimizer with LR 1e-2 and ran 
+        training for 2000 iterations. We can see that as training progress, the model gets better at identifying the colors of the image.
+      </p>
+
+      <div class="grid">
+        <figure><img src="imgs/fox.jpg" alt="Poster" /><figcaption>Original Image</figcaption></figure>
+        <figure><img src="imgs/fox_00000.png" alt="Poster" /><figcaption>0 iterations</figcaption></figure>
+        <figure><img src="imgs/fox_00600.png" alt="Poster warped with nearest neighbor" /><figcaption>600 iterations</figcaption></figure>
+      </div>
+
+      <div class="grid">
+        <figure><img src="imgs/fox_01200.png" alt="Poster warped with bilinear interpolation" /><figcaption>1200 iterations</figcaption></figure>
+        <figure><img src="imgs/fox_01200.png" alt="Poster warped with bilinear interpolation" /><figcaption>2000 iterations</figcaption></figure>
+        <figure><img src="imgs/fox_psnr.png" alt="Poster warped with bilinear interpolation" /><figcaption>training PSNR curve</figcaption></figure>
+      </div>
+
+      <p class="desc">
+        I also trained on an image in our mug dataset.
+      </p>
+
+      <div class="grid">
+        <figure><img src="imgs/mug_3.jpeg" alt="Poster" /><figcaption>Original Image</figcaption></figure>
+        <figure><img src="imgs/mug_00000.png" alt="Poster" /><figcaption>0 iterations</figcaption></figure>
+        <figure><img src="imgs/mug_00600.png" alt="Poster warped with nearest neighbor" /><figcaption>600 iterations</figcaption></figure>
+      </div>
+
+      <div class="grid">
+        <figure><img src="imgs/mug_01200.png" alt="Poster warped with bilinear interpolation" /><figcaption>1200 iterations</figcaption></figure>
+        <figure><img src="imgs/mug_01200.png" alt="Poster warped with bilinear interpolation" /><figcaption>2000 iterations</figcaption></figure>
+        <figure><img src="imgs/mug_psnr.png" alt="Poster warped with bilinear interpolation" /><figcaption>training PSNR curve</figcaption></figure>
+      </div>
+
+      <p class="desc">
+        Testing different hyperparameters on the mug image shows that a greater max positional frequency and wider network will 
+        pick up on finer details.
+      </p>
+
+      <figure><img src="imgs/mug_2x2.png" alt="Poster warped with bilinear interpolation" /><figcaption></figcaption></figure>
+      </div>
+
+    </section>
+
+    <section class="part">
+      <h2>Lego NeRF</h2>
+      <script type="text/javascript" async
+        src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js">
+      </script>
+      <p class="desc">
+        First I trained a NeRF on the Lego dataset. This pipeline has many components:
+        
+        Ray Sampling: given an image, we need to be able to generate rays and sample along those rays. From an image, we can use the 
+        (inverse of) the camera intrinsics to convert it to camera space. Then we can use the extrinsics matrix to recover
+        the point in the 3D world space. We can also get the camera in the 3D space and use the 2 points to get the origin
+        and direction of the ray of interest. Sampling along this ray is straightforward.
+        <br><br>
+        For the lego dataset per iteration, I sampled 64 points from distances 2.0 to 6.0, 10,000 rays, and added small perturbations
+        to make the network more robust.
+      </p>
+
+      <div class="grid">
+        <figure><img src="imgs/lego_rays_side.png" alt="square" /><figcaption>Sampled Rays (Side View)</figcaption></figure>
+        <figure><img src="imgs/lego_rays_top.png" alt="Square warped with nearest neighbor" /><figcaption>Sampled Rays (Top View)</figcaption></figure>
+      </div>
+      
+      <p>
+        Neural Network: This will try to predict density and RGB of a sampled point, trained on images of our object. My network 
+        had 8 hidden layers then a density head that went through another hiddle layer and ReLU activation, and the color head that
+        had 1 hidden layer, add color PE, hidden layer, ReLu, hidden layer, then sigmoid. There was a skip connection after the 4th layer.
+        <br><br>
+
+        Volumetric Rendering: an algorithm to actually be able to visualize the outputs of our neural network. Volume rendering formula:
+          \( C = \sum_{i=1}^{N} T_i \, \alpha_i \, c_i \)
+          with
+          \( \alpha_i = 1 - e^{-\sigma_i \, \delta_i} \)
+          and
+          \( T_i = \prod_{j=1}^{i-1} (1 - \alpha_j) \)
+
+        <br><br>
+        I trained on the lego dataset for 2000 iterations with Adam Optimizer and LR 5e-4, achieving 25 PSNR.
+      </p>
+
+      <div class="grid">
+        <figure><img src="imgs/lego_00000.png" alt="Iteration 0" /><figcaption>Iteration 0</figcaption></figure>
+        <figure><img src="imgs/lego_00400.png" alt="Iteration 400" /><figcaption>Iteration 400</figcaption></figure>
+        <figure><img src="imgs/lego_01000.png" alt="Iteration 400" /><figcaption>Iteration 1000</figcaption></figure>
+        <figure><img src="imgs/lego_02000.png" alt="Iteration 400" /><figcaption>Iteration 2000</figcaption></figure>
+      </div>
+
+      <div class="grid">
+        <figure><img src="imgs/lego_psnr.png" alt="Iteration 0" /><figcaption>Training and Validation PSNR during Training</figcaption></figure>
+        <figure><img src="imgs/lego-1.gif" alt="Iteration 400" /><figcaption>Spherical/Novel Views of lego</figcaption></figure>
+      </div>
+
+    </section>
+
+    <section class="part">
+      <h2>NeRF on Custom Dataset</h2>
+      <p class="desc">
+        Lastly we train a NeRF on our custom mug dataset! I used near=0.3, far=1.0, and iterations=5000, and kept all other 
+        hyperparameters the same as when I trained on the lego dataset. If I were to retrain I would probably make the near and 
+        far interval tighter to get rid of artifacts that showed up in the final result. The progression images are from the validation set.
+      </p>
+      <div class="grid">
+        <figure><img src="imgs/val_step_00000.png" alt="Balcony middle view" /><figcaption>Iteration 0</figcaption></figure>
+        <figure><img src="imgs/val_step_01000.png" alt="Balcony right view" /><figcaption>Iteration 1000</figcaption></figure>
+        <figure><img src="imgs/val_step_03000.png" alt="Blended balcony middle and right images" /><figcaption>Iteration 3000</figcaption></figure>
+        <figure><img src="imgs/val_step_05000.png" alt="Blended balcony middle and right images" /><figcaption>Iteration 5000</figcaption></figure>
+      </div>
+      <p class="desc">
+        In the final gif the mug seems to "disappear" for some of it, this could either be because I was not able to capture a 
+        lot of images from that side or else the ArUco tag would not be detected or simply I set my near value to be a bit far.
+      </p>
+      <div class="grid">
+        <figure><img src="imgs/training_loss.png" alt="Human outline" /><figcaption>Training Loss (every 100 iterations)</figcaption></figure>
+        <figure><img src="imgs/val_psnr_plot.png" alt="Human outline" /><figcaption>PSNR graph</figcaption></figure>
+        <figure><img src="imgs/mug_orbit.gif" alt="Human outline" /><figcaption>Spherical/Novel Views</figcaption></figure>
+      </div>
+      
+  </main>
+</body>
+</html>
+
