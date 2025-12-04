@@ -1,0 +1,123 @@
+:root {
+  --bg: #fdfdfd;
+  --panel: #ffffff;
+  --ink: #222;
+  --subtle: #666;
+  --accent: #3366cc;
+  --radius: 12px;
+  --gap: 16px;
+  --maxw: 1100px;
+}
+
+/* Basic reset */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+  line-height: 1.5;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+/* Header */
+header {
+  max-width: var(--maxw);
+  margin: 40px auto 24px;
+  padding: 24px;
+  background: var(--panel);
+  border: 1px solid #ddd;
+  border-radius: var(--radius);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  text-align: center;
+}
+
+h1 {
+  font-size: clamp(1.4rem, 2.5vw, 2rem);
+  margin-bottom: 6px;
+}
+
+.subtitle {
+  color: var(--subtle);
+  font-size: .98rem;
+}
+
+/* Main content */
+main {
+  max-width: var(--maxw);
+  margin: 0 auto 80px;
+  padding: 0 16px;
+  display: grid;
+  gap: 28px;
+}
+
+/* Sections */
+section.part {
+  background: var(--panel);
+  border: 1px solid #ddd;
+  border-radius: var(--radius);
+  padding: clamp(16px, 2.5vw, 28px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.part h2 {
+  font-size: clamp(1.2rem, 2vw, 1.5rem);
+  margin-bottom: 6px;
+}
+
+.part .desc {
+  color: var(--subtle);
+  margin-bottom: 18px;
+  font-size: .98rem;
+}
+
+/* Image grids */
+.grid {
+  display: grid;
+  gap: var(--gap);
+  margin: 1rem 0;
+}
+
+@media (min-width: 780px) {
+  .grid {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+}
+
+figure {
+  margin: 0;
+  border: 1px solid #ddd;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #f8f8f8;
+}
+
+figure img {
+  display: block;
+  width: 100%;
+  max-height: 300px;
+  object-fit: contain;
+}
+
+figcaption {
+  padding: 10px 12px;
+  font-size: .95rem;
+  color: var(--subtle);
+  border-top: 1px solid #eee;
+  background: rgba(255,255,255,0.8);
+  backdrop-filter: blur(4px);
+}
+/* --- PRINT STYLING --- */
+@media print {
+  body, html, main {
+    display: block !important;
+    height: auto !important;
+  }
+
+  .grid {
+    display: block !important;
+  }
+
+  figure {
+    page-break-inside: avoid;
+  }
+}

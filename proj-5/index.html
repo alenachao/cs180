@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CS180 Project 5</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script type="text/javascript" async
+    src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js">
+  </script>
+</head>
+<body>
+  <header>
+    <h1>CS180 Project 5: Fun with Diffusion Models</h1>
+    <p class="subtitle">By Alena Chao</p>
+  </header>
+
+  <main>
+    <!-- PROJ 5A -->
+    <section class="part">
+      <h2>Play with the Model using Your Own Text Prompts!</h2>
+      <p class="desc">
+        In the first part of the project we experiment with DeepFloyd, a trained text-to-image model. So first we need some text prompts!
+        Throughout this project I will take from the following pool of prompts:
+        <br><br>
+        ['a high quality picture',
+        'a photo of a cat',
+        'a water color painting of a dinosaur eating a hot dog',
+        'a photo of the great wall of china',
+        'an oil painting of people around a campfire',
+        'an oil painting of an old man',
+        'a photo of a sloth',
+        'a photo of vases',
+        'a painting of a forest fire',
+        'a painting of waterfalls',
+        'a lithograph of waterfalls',
+        'a lithograph of a skull',
+        'a houseplant',
+        'a squirrel',
+        'a high quality photo',
+        'a lithograph of a panda',
+        'a lithograph of flowers',
+        '']
+        <br><br>
+        Here are outputs from 3 inputs into the model, changing num_inference_steps from 20 to 100. I used random seed = 100.
+      </p>
+
+      <div class="grid">
+        <figure><img src="imgs/cat_20.png" alt="Balcony middle view" /><figcaption>'a photo of a cat' (20 steps)</figcaption></figure>
+        <figure><img src="imgs/dino_20.png" alt="Balcony right view" /><figcaption>'a water color painting of a dinosaur eating a hot dog' (20 steps)</figcaption></figure>
+        <figure><img src="imgs/china_20.png" alt="Balcony right view" /><figcaption>'a photo of the great wall of china' (20 steps)</figcaption></figure>
+      </div>
+
+      <div class="grid">
+        <figure><img src="imgs/cat_100.png" alt="Balcony middle view" /><figcaption>'a photo of a cat' (100 steps)</figcaption></figure>
+        <figure><img src="imgs/dino_100.png" alt="Balcony right view" /><figcaption>'a water color painting of a dinosaur eating a hot dog' (100 steps)</figcaption></figure>
+        <figure><img src="imgs/china_100.png" alt="Balcony right view" /><figcaption>'a photo of the great wall of china' (100 steps)</figcaption></figure>
+      </div>
+
+      <p class="desc">
+        I chose these prompts because I was hoping to get a "variety" of outputs. 'a cat' I would think is a pretty easy prompt, as it's broad 
+        and genric. I wanted to be overly specific with the dinosaur prompt to see if the model can extrapolate. It did a better job than I expected,
+        but still noticeably struggled versus the other prompt. Finally I tried the great wall of china because this is still a more realistic 
+        prompt than the dinosaur one, but more specific than the cat prompt.
+
+        <br><br>
+
+        I notice that between 20 steps and 100 steps, I actually prefer the 20 step outputs. It seems like in the 100 step output, it is overfitting and
+        tries to keep adding detail to the image which actually makes it look "deep fried" and unnatrual. Kind of like when you try to sharpen an image too much.
+      </p>
+      
+    </section>
+
+    <section class="part">
+      <h2>Implementing Forward Process (Noising image)</h2>
+      <p class="desc">
+        Diffusion relies on denoising a noisy image, so we will have to implement noising an image. We will do this by iteratively
+        adding gaussian noise. As we progress in timesteps, the image should get more noisy! We manage this in our code with an alphas_cumprod
+        variable.
+      </p>
+
+      <div class="grid">
+        <figure><img src="imgs/campanile.png" alt="Poster" /><figcaption>Original Image</figcaption></figure>
+      </div>
+
+      <div class="grid">
+        <figure><img src="imgs/campanile_noise.png" alt="Poster" /><figcaption>Iteratively Noising Image</figcaption></figure>
+      </div>
+
+    </section>
+
+    <section class="part">
+      <h2>Classical Denoising</h2>
+      <p class="desc">
+        Our first attempt at denoising the above noisy images is by applying a gaussian filter, but this does not work very well.
+      </p>
+
+      <figure><img src="imgs/camp_gaussian_denoise.png" alt="Balcony middle view" /><figcaption></figcaption></figure>
+
+    </section>
+
+    <section class="part">
+
+      <h2>One-Step Denoising</h2>
+      <p class="desc">
+        Our next attempt is using a pretrained Unet (DeepFloyd) to denoise the image. For each noisy image, we run the noisy image 
+        through the unet. The unet will predict the noise in the image. We can then remove the predicted noise from the noisy image 
+        to get our reconstruction. This works a lot better than classical denoising but still not perfect, especially when we add 
+        more and more noise.
+      </p>
+      
+      <figure><img src="imgs/camp_unet_denoise.png" alt="Balcony middle view" /><figcaption></figcaption></figure>
+      
+    </section>
+
+    <section class="part">
+      
+      <h2>Iterative Denoising</h2>
+      <p class="desc">
+        Building off the previous part, we can get even better results by iteratively denoising our image. For example, if we noised
+        our image from T0 -> T1 -> ... T1000, instead of denoising straight from T1000 (noisy) -> T0 (clean), we can denoise from 
+        T1000 -> T999 -> ... -> T0. We implement strides to our timesteps to speed up computation, using a linear interpolation-like 
+        formula to get from timestep to timestep to timestep.
+      </p>
+      
+      <figure><img src="imgs/iterative_denoising_formula.png" alt="Balcony middle view" /><figcaption></figcaption></figure>
+
+      <figure><img src="imgs/iterative_denoising.png" alt="Balcony middle view" /><figcaption>Iterative Denoising over time</figcaption></figure>
+      
+      <div class="grid">
+        <figure><img src="imgs/campanile.png" alt="Balcony middle view" /><figcaption>Original Image</figcaption></figure>
+        <figure><img src="imgs/iterative_final.png" alt="Balcony right view" /><figcaption>Iterative Denoising</figcaption></figure>
+        <figure><img src="imgs/iterative_guassian.png" alt="Balcony right view" /><figcaption>Gaussian Denoising</figcaption></figure>
+        <figure><img src="imgs/iterative_one_step.png" alt="Balcony right view" /><figcaption>One Step Denoising</figcaption></figure>
+      </div>
+
+    </section>
+
+    <section class="part">
+      
+      <h2>Diffusion Model Sampling</h2>
+      <p class="desc">
+        Instead of adding noise to an image and then denoising to recover it, we can also denoise random noise to get a new image!
+        For now we use the neutral prompt "a high quality photo" to not condition the model to output a specific scene.
+      </p>
+      
+      <figure><img src="imgs/1.5.png" alt="Balcony middle view" /><figcaption></figcaption></figure>
+
+    </section>
+
+     <section class="part">
+      
+      <h2>Classifier Free Guidance</h2>
+      <p class="desc">
+        To improve the quality of our sampling outputs relative to the last section, we use a technique called "classifier free guidance."
+        We get two estimates/outputs from our diffusion model: an unconditioned output (prompt="") and a conditioned output (prompt="a high quality photo", for now.).
+        Then we combine the predicted noise to get the noise we will use to denoise the image at the current time step: final_noise = unconditioned_noise +
+        gamma * (conditioned_noise - unconditioned_noise), where gamma is a hyperparameter depending on how much we want to "condition."
+      </p>
+      
+      <figure><img src="imgs/1.6.png" alt="Balcony middle view" /><figcaption>gamma=7</figcaption></figure>
+
+    </section>
+
+     <section class="part">
+      
+      <h2>Image-to-Image Translation</h2>
+      <p class="desc">
+        Another technique is taking a noisy image and CFG to edit a picture. The more iterations we run/more noise we add,
+        the more the picture is edited.
+      </p>
+
+      <div class="grid">
+        <figure><img src="imgs/campanile.png" alt="Balcony middle view" /><figcaption>Original Campanile Picture</figcaption></figure>
+        <figure><img src="imgs/apple.jpg" alt="Balcony middle view" /><figcaption>Original Apple Picture</figcaption></figure>
+        <figure><img src="imgs/library.jpg" alt="Balcony middle view" /><figcaption>Original Library Picture</figcaption></figure>
+      </div>
+
+      
+      <figure><img src="imgs/1.7_quality.png" alt="Balcony middle view" /><figcaption>Campanile with prompt "a high quality photo", noise levels [1, 3, 5, 7, 10, 20]</figcaption></figure>
+      <figure><img src="imgs/1.7_apple.png" alt="Balcony middle view" /><figcaption>Apple with prompt "a high quality photo", noise levels [1, 3, 5, 7, 10, 20]</figcaption></figure>
+      <figure><img src="imgs/1.7_library.png" alt="Balcony middle view" /><figcaption>Library with prompt "a high quality photo", noise levels [1, 3, 5, 7, 10, 20]</figcaption></figure>
+
+      <br>
+
+      <p class="desc">
+        We can even apply this technique to handdrawn images.
+      </p>
+
+      <div class="grid">
+        <figure><img src="imgs/spongebob.webp" alt="Balcony middle view" /><figcaption>Original Spongebob Cartoon</figcaption></figure>
+        <figure><img src="imgs/drawn_pineapple.png" alt="Balcony right view" /><figcaption>Original Handdrawn Pineapple</figcaption></figure>
+        <figure><img src="imgs/drawn_dog.png" alt="Balcony right view" /><figcaption>Original Handdrawn Dog</figcaption></figure>
+      </div>
+
+      <figure><img src="imgs/1.7.1_sponge.png" alt="Balcony middle view" /><figcaption>Spongebob with prompt "a high quality photo", noise levels [1, 3, 5, 7, 10, 20]</figcaption></figure>
+      <figure><img src="imgs/1.7.1_pineapple.png" alt="Balcony middle view" /><figcaption>Pineapple with prompt "a high quality photo", noise levels [1, 3, 5, 7, 10, 20]</figcaption></figure>
+      <figure><img src="imgs/1.7.1_dog.png" alt="Balcony middle view" /><figcaption>Dog with prompt "a high quality photo", noise levels [1, 3, 5, 7, 10, 20]</figcaption></figure>
+
+    </section>
+
+    <section class="part">
+      
+      <h2>Inpainting</h2>
+      <p class="desc">
+        Inpainting is where we edit a specific part of the image. We can do this by following our previous algorithm, but when 
+        we calculate our final predicted image at timestep t, we only take the diffused image at the part we want to edit, and take
+        the original image (for timestep t) everywhere else.
+      </p>
+
+      <div class="grid">
+        <figure><img src="imgs/campanile.png" alt="Balcony middle view" /><figcaption>Original Campanile Image</figcaption></figure>
+         <figure><img src="imgs/campanile_mask.png" alt="Balcony middle view" /><figcaption>Campanile To Replace</figcaption></figure>
+        <figure><img src="imgs/inpaint_campanile.png" alt="Balcony middle view" /><figcaption>Inpainted Campanile</figcaption></figure>
+      </div>
+      
+      <div class="grid">
+         <figure><img src="imgs/apple.jpg" alt="Balcony middle view" /><figcaption>Original Apple Image</figcaption></figure>
+        <figure><img src="imgs/inpaint_apple_mask.png" alt="Balcony middle view" /><figcaption>Apple to Replace</figcaption></figure>
+        <figure><img src="imgs/inpaint_apple.png" alt="Balcony middle view" /><figcaption>Inpainted Apple</figcaption></figure>
+      </div>
+      
+      <div class="grid">
+        <figure><img src="imgs/library.jpg" alt="Balcony middle view" /><figcaption>Original Library Image</figcaption></figure>
+        <figure><img src="imgs/inpaint_library_mask.png" alt="Balcony middle view" /><figcaption>Library to Replace</figcaption></figure>
+        <figure><img src="imgs/inpaint_library.png" alt="Balcony middle view" /><figcaption>Inpainted Library</figcaption></figure>
+      </div>
+      
+    </section>
+
+    <section class="part">
+      
+      <h2>Text-Conditional Image-to-Image Translation</h2>
+      <p class="desc">
+        Now we experiment with image-to-image translation but we condition on a prompt more specific than "high quality picture."
+        We should expect the edited image to be more and more related to our prompt with more iterations.
+      </p>
+
+      <div class="grid">
+        <figure><img src="imgs/campanile.png" alt="Balcony middle view" /><figcaption>Original Campanile Picture</figcaption></figure>
+        <figure><img src="imgs/apple.jpg" alt="Balcony middle view" /><figcaption>Original Apple Picture</figcaption></figure>
+        <figure><img src="imgs/library.jpg" alt="Balcony middle view" /><figcaption>Original Library Picture</figcaption></figure>
+      </div>
+
+      <figure><img src="imgs/campanile_fire.png" alt="Balcony middle view" /><figcaption>Campanile with prompt 'a painting of a forest fire', noise levels [1, 3, 5, 7, 10, 20]</figcaption></figure>
+      <figure><img src="imgs/apple_cat.png" alt="Balcony middle view" /><figcaption>Apple with prompt 'a photo of a cat', noise levels [1, 3, 5, 7, 10, 20]</figcaption></figure>
+      <figure><img src="imgs/library_waterfall.png" alt="Balcony middle view" /><figcaption>Library with prompt  'a painting of waterfalls', noise levels [1, 3, 5, 7, 10, 20]</figcaption></figure>
+
+    </section>
+
+    <section class="part">
+      
+      <h2>Visual Anagrams</h2>
+
+      <p class="desc">
+        We create images that embody one prompt rightside up and another prompt upside down. 
+        We do this by predicting noise with the current image rightside up and upside down, then combine them
+        (flip the flipped predicted noise and then average them).
+      </p>
+
+      <figure><img src="imgs/oldman_campfire.png" alt="Balcony middle view" /><figcaption>'an oil painting of an old man' and  'an oil painting of people around a campfire'</figcaption></figure>
+      <figure><img src="imgs/cat_flowers.png" alt="Balcony middle view" /><figcaption>'a photo of a cat' and 'a lithograph of flowers'</figcaption></figure>
+      <figure><img src="imgs/waterfall_vases.png" alt="Balcony middle view" /><figcaption>'a painting of waterfalls' and  'a photo of vases'</figcaption></figure>
+
+    </section>
+
+    <section class="part">
+      
+      <h2>Hybrid Images</h2>
+      <p class="desc">
+        We can create images that look like one prompt up close and another from far away. This is done by blending the high frequencies 
+        of one image (the image you'll see up close) and the low frequencies of the other (the image you'll see far away). We can do this 
+        by again predicting noise for each prompt, then combine them by passing one noise into a low pass filter and one through a high pass
+        filter.
+      </p>
+
+      <div class="grid">
+        <figure><img src="imgs/skull_waterfall.png" alt="Balcony middle view" /><figcaption>high="a lithograph of a skull", low="a lithograph of waterfalls"</figcaption></figure>
+        <figure><img src="imgs/waterfall_skull.png" alt="Balcony middle view" /><figcaption>high="a lithograph of waterfalls", low="a lithograph of a skull"</figcaption></figure>
+        <figure><img src="imgs/panda_flowers.png" alt="Balcony middle view" /><figcaption>high="a lithograph of a panda", low="a lithograph of flowers"</figcaption></figure>
+        <figure><img src="imgs/panda_flowers2.png" alt="Balcony middle view" /><figcaption>high="a lithograph of a panda", low="a lithograph of flowers" -- generated again!</figcaption></figure>
+        <figure><img src="imgs/china_vases.png" alt="Balcony middle view" /><figcaption>high="a photo of vases", low="a photo of the great wall of china"</figcaption></figure>
+      </div>
+      
+
+    </section>
+
+    <!-- PROJ 5B -->
+    <section class="part">
+      
+      <h2>Implementing a U-net</h2>
+      <p class="desc">
+        Our final goal will be to train a flow matching model to denoise the MNIST dataset. our noising process will be
+        adding gaussian noise to each image in the dataset, and we can adjust the amount of noise with the sigma of the gaussian.
+      </p>
+
+      <figure><img src="imgs2/noising_mnist.png" alt="Balcony middle view" /><figcaption>Sample image noised over various sigmas</figcaption></figure>
+
+      <br>
+
+      <p class="desc">
+        First we can show results when we apply noise with sigma=0.5 to the dataset and train the Unet to denoise.
+      </p>
+
+      <figure><img src="imgs2/1.2.1_training-curve.png" alt="Balcony middle view" /><figcaption>Training loss over 5 epochs</figcaption></figure>
+      <figure><img src="imgs2/1.2.1_1-epoch.png" alt="Balcony middle view" /><figcaption>Test results after 1 epoch</figcaption></figure>
+      <figure><img src="imgs2/1.2.1_5-epoch.png" alt="Balcony middle view" /><figcaption>Test results after 5 epochs</figcaption></figure>
+      <figure><img src="imgs2/1.2.2.png" alt="Balcony middle view" /><figcaption>Out of distribution testing (after 5 epochs on sigmas the model was not trained on)</figcaption></figure>
+
+      <br>
+
+      <p class="desc">
+        We can also try training our model on pure noise. We do this by always having the input to the model always be pure noise, but the 
+        training loss is still calculated with the prediction and ground truth image. Because the model is trying to minimize mean squared loss,
+        it ends up taking the "average" of all the pictures and always predicts that.
+      </p>
+      
+      <figure><img src="imgs2/1.2.3_training-curve.png" alt="Balcony middle view" /><figcaption>Training loss over 5 epochs</figcaption></figure>
+      <figure><img src="imgs2/1.2.3_1-epoch.png" alt="Balcony middle view" /><figcaption>Test results after 1 epoch</figcaption></figure>
+      <figure><img src="imgs2/1.2.3_5-epochs.png" alt="Balcony middle view" /><figcaption>Test results after 5 epochs</figcaption></figure>
+
+      
+
+    </section>
+
+    <section class="part">
+      
+      <h2>Implementing Flow Matching - Time Conditioning</h2>
+      <p class="desc">
+        Now we can start building flow matching into our Unet. In iterative denoising there is a time component
+        t=0 means clean image and t=1 means pure gaussian noise. Then we can define flow as the velocity at some x_t, 
+        going from x0 to x1. Then by  conditioning our model on t, we can have it learn flow instead of the clean image.
+        This greatly improves performance.
+      </p>
+
+      <figure><img src="imgs2/2.2_training-loss.png" alt="Balcony middle view" /><figcaption>Training Loss</figcaption></figure>
+      <figure><img src="imgs2/2.3_1-epoch.png" alt="Balcony middle view" /><figcaption>Test results after 1 epoch</figcaption></figure>
+      <figure><img src="imgs2/2.3_5-epoch.png" alt="Balcony middle view" /><figcaption>Test results after 5 epochs</figcaption></figure>
+      <figure><img src="imgs2/2.3_10-epoch.png" alt="Balcony middle view" /><figcaption>Test results after 10 epochs</figcaption></figure>
+
+    </section>
+
+    <section class="part">
+      
+      <h2>Implementing Flow Matching - Class Conditioning</h2>
+      <p class="desc">
+        We can also condition on how many classes we have. For example, since the MNIST dataset is digits 0-9, we have 
+        10 classes. Then when we are training, in addition to inputting the image into the model, we also give it the label.
+      </p>
+
+      <figure><img src="imgs2/2.6_training-loss.png" alt="Balcony middle view" /><figcaption>Training Loss</figcaption></figure>
+      <figure><img src="imgs2/2.6_1-epoch.png" alt="Balcony middle view" /><figcaption>Test results after 1 epoch</figcaption></figure>
+      <figure><img src="imgs2/2.6_5-epoch.png" alt="Balcony middle view" /><figcaption>Test results after 5 epochs</figcaption></figure>
+      <figure><img src="imgs2/2.6_10-epochs.png" alt="Balcony middle view" /><figcaption>Test results after 10 epochs</figcaption></figure>
+
+      <br>
+      <p class="desc">
+        Lastly, we can experiment getting rid of our LR scheduler while achieving similar quality results. 
+        The scheduler essentially allows us to have a larger LR in the beginning, then once we get close to the optimum,
+        the LR won't be too big that our training becomes unstable. 
+        Then in order to compensate for getting rid of the scheduler, I simply decreased the LR from 1e-2 to 1e-3 and 
+        trained for 20 epochs.
+      </p>
+      <figure><img src="imgs2/2.6_noscheduler.png" alt="Balcony middle view" /><figcaption>Test results with no LR scheduler after 20 epochs</figcaption></figure>
+
+    </section>
+
+
+      
+  </main>
+</body>
+</html>
+
